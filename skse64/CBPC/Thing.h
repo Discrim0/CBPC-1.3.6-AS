@@ -83,6 +83,10 @@ public:
 	bool updatePussyFirstRun = true;
 	NiPoint3 leftPussyDefaultPos;
 	NiPoint3 rightPussyDefaultPos;
+	NiPoint3 leftAnusDefaultPos;
+	NiPoint3 rightAnusDefaultPos;
+	NiPoint3 upperAnusDefaultPos;
+	NiPoint3 lowerAnusDefaultPos;
 
 	bool updateBellyFirstRun = true;
 	NiPoint3 bellyDefaultPos;

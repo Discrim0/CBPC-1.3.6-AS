@@ -4,7 +4,10 @@ BSFixedString leftPus("NPC L Pussy02");
 BSFixedString rightPus("NPC R Pussy02");
 BSFixedString belly("HDT Belly");
 BSFixedString pelvis("NPC Pelvis [Pelv]");
-
+BSFixedString leftAnus("NPC LB Anus2");
+BSFixedString rightAnus("NPC RB Anus2");
+BSFixedString upperAnus("NPC RT Anus2");
+BSFixedString downAnus("NPC LT Anus2");
 
 
 Thing::Thing(Actor * actor, NiAVObject *obj, BSFixedString &name)
@@ -246,9 +249,105 @@ void Thing::updatePelvis(Actor *actor)
 
 	NiAVObject* leftPusObj = loadedState->node->GetObjectByName(&leftPus.data);
 	NiAVObject* rightPusObj = loadedState->node->GetObjectByName(&rightPus.data);
+	NiAVObject* leftAnusObj = loadedState->node->GetObjectByName(&leftAnus.data);
+	NiAVObject* rightAnusObj = loadedState->node->GetObjectByName(&rightAnus.data);
+	NiAVObject* upperAnusObj = loadedState->node->GetObjectByName(&upperAnus.data);
+	NiAVObject* downAnusObj = loadedState->node->GetObjectByName(&downAnus.data);
 		
 	if (!leftPusObj || !rightPusObj)
 	{
+		if (!leftAnusObj || !rightAnusObj || upperAnusObj || downAnusObj) {
+			if (updatePussyFirstRun)
+			{
+				updatePussyFirstRun = false;
+				leftAnusDefaultPos = leftAnusObj->m_localTransform.pos;
+				rightAnusDefaultPos = rightAnusObj->m_localTransform.pos;
+				upperAnusDefaultPos = upperAnusObj->m_localTransform.pos;
+				lowerAnusDefaultPos = downAnusObj->m_localTransform.pos;
+			}
+
+			leftAnusObj->m_localTransform.pos = leftAnusDefaultPos;
+			rightAnusObj->m_localTransform.pos = rightAnusDefaultPos;
+			upperAnusObj->m_localTransform.pos = upperAnusDefaultPos;
+			downAnusObj->m_localTransform.pos = lowerAnusDefaultPos;
+
+			// Collision Stuff Start
+			NiPoint3 collisionVector = emptyPoint;
+
+			NiMatrix33 pelvisRotation;
+			NiPoint3 pelvisPosition;
+
+			NiAVObject* pelvisObj = loadedState->node->GetObjectByName(&pelvis.data);
+			if (!pelvisObj)
+				return;
+
+			pelvisRotation = pelvisObj->m_worldTransform.rot;
+			pelvisPosition = pelvisObj->m_worldTransform.pos;
+
+			std::vector<long> thingIdList;
+			std::vector<long> hashIdList;
+			for (int i = 0; i < thingCollisionSpheres.size(); i++)
+			{
+				thingCollisionSpheres[i].worldPos = pelvisPosition + (pelvisRotation * thingCollisionSpheres[i].offset100);
+				hashIdList = GetHashIdsFromPos(thingCollisionSpheres[i].worldPos, thingCollisionSpheres[i].radius100, hashSize);
+				for (int m = 0; m < hashIdList.size(); m++)
+				{
+					if (!(std::find(thingIdList.begin(), thingIdList.end(), hashIdList[m]) != thingIdList.end()))
+					{
+						thingIdList.emplace_back(hashIdList[m]);
+					}
+				}
+			}
+
+			NiPoint3 collisionDiff = emptyPoint;
+
+			for (int j = 0; j < thingIdList.size(); j++)
+			{
+				long id = thingIdList[j];
+				if (partitions.find(id) != partitions.end())
+				{
+					//LOG_INFO("Pelvis hashId=%d", id);
+					for (int i = 0; i < partitions[id].partitionCollisions.size(); i++)
+					{
+						if (partitions[id].partitionCollisions[i].colliderActor == actor && partitions[id].partitionCollisions[i].colliderNodeName.find("Genital") != std::string::npos)
+							continue;
+
+						InterlockedIncrement(&callCount);
+						partitions[id].partitionCollisions[i].CollidedWeight = actorWeight;
+
+						collisionDiff = partitions[id].partitionCollisions[i].CheckPelvisCollision(thingCollisionSpheres);
+						collisionVector = collisionVector + collisionDiff;
+					}
+				}
+			}
+
+			// Collision Stuff End
+
+			NiPoint3 leftVector = collisionVector;
+			NiPoint3 rightVector = collisionVector;
+			float opening = distance(collisionVector, emptyPoint);
+
+			CalculateDiffVagina(leftVector, opening, true);
+			CalculateDiffVagina(rightVector, opening, false);
+
+			NormalizeNiPoint(leftVector, vaginaOpeningLimit * -1.0f, vaginaOpeningLimit);
+			NormalizeNiPoint(rightVector, vaginaOpeningLimit * -1.0f, vaginaOpeningLimit);
+
+			//
+			NiPoint3 upperVector;
+			upperVector.x = rightVector.y;
+			upperVector.y = leftVector.x;
+			upperVector.z = leftVector.z;
+			NiPoint3 downVector;
+			downVector.x = rightVector.y;
+			downVector.y = rightVector.x;
+			downVector.z = rightVector.z;
+
+			leftAnusObj->m_localTransform.pos = leftAnusDefaultPos + downVector;
+			rightAnusObj->m_localTransform.pos = rightAnusDefaultPos + upperVector;
+			upperAnusObj->m_localTransform.pos = upperAnusDefaultPos + rightVector;
+			downAnusObj->m_localTransform.pos = lowerAnusDefaultPos + leftVector;
+		}
 		return;
 	}
 	else
@@ -285,6 +384,10 @@ void Thing::updatePelvis(Actor *actor)
 				thingDefaultPosList[rightpair] = rightPussyDefaultPos;
 				LOG("Adding %s to default list for %08x -> %g %g %g", rightPus.data, actor->baseForm->formID, rightPussyDefaultPos.x, rightPussyDefaultPos.y, rightPussyDefaultPos.z);
 
+				leftAnusDefaultPos = leftAnusObj->m_localTransform.pos;
+				rightAnusDefaultPos = rightAnusObj->m_localTransform.pos;
+				upperAnusDefaultPos = upperAnusObj->m_localTransform.pos;
+				lowerAnusDefaultPos = downAnusObj->m_localTransform.pos;
 			}
 			else
 			{
@@ -297,6 +400,12 @@ void Thing::updatePelvis(Actor *actor)
 		leftPusObj->m_localTransform.pos = leftPussyDefaultPos;
 
 		rightPusObj->m_localTransform.pos = rightPussyDefaultPos;
+
+		leftAnusObj->m_localTransform.pos = leftAnusDefaultPos;
+		rightAnusObj->m_localTransform.pos = rightAnusDefaultPos;
+		upperAnusObj->m_localTransform.pos = upperAnusDefaultPos;
+		downAnusObj->m_localTransform.pos = lowerAnusDefaultPos;
+
 	}
 
 	// Collision Stuff Start
@@ -353,22 +462,31 @@ void Thing::updatePelvis(Actor *actor)
 	
 	NiPoint3 leftVector = collisionVector;
 	NiPoint3 rightVector = collisionVector;
-
 	float opening = distance(collisionVector, emptyPoint);
 
 	CalculateDiffVagina(leftVector, opening, true);
 	CalculateDiffVagina(rightVector, opening, false);
 
-	NormalizeNiPoint(leftVector, vaginaOpeningLimit*-1.0f, vaginaOpeningLimit);
+	NormalizeNiPoint(leftVector, vaginaOpeningLimit * -1.0f, vaginaOpeningLimit);
 	leftPusObj->m_localTransform.pos = leftPussyDefaultPos + leftVector;
 
-	NormalizeNiPoint(rightVector, vaginaOpeningLimit*-1.0f, vaginaOpeningLimit);
+	NormalizeNiPoint(rightVector, vaginaOpeningLimit * -1.0f, vaginaOpeningLimit);
 	rightPusObj->m_localTransform.pos = rightPussyDefaultPos + rightVector;
-	/*QueryPerformanceCounter(&endingTime);
-	elapsedMicroseconds.QuadPart = endingTime.QuadPart - startingTime.QuadPart;
-	elapsedMicroseconds.QuadPart *= 1000000000LL;
-	elapsedMicroseconds.QuadPart /= frequency.QuadPart;
-	LOG("Thing.updatePelvis() Update Time = %lld ns\n", elapsedMicroseconds.QuadPart);*/
+
+	//
+	NiPoint3 upperVector;
+	upperVector.x = rightVector.y;
+	upperVector.y = leftVector.x;
+	upperVector.z = leftVector.z;
+	NiPoint3 downVector;
+	downVector.x = rightVector.y;
+	downVector.y = rightVector.x;
+	downVector.z = rightVector.z;
+
+	leftAnusObj->m_localTransform.pos = leftAnusDefaultPos + downVector;
+	rightAnusObj->m_localTransform.pos = rightAnusDefaultPos + upperVector;
+	upperAnusObj->m_localTransform.pos = upperAnusDefaultPos + rightVector;
+	downAnusObj->m_localTransform.pos = lowerAnusDefaultPos + leftVector;
 }
 
 float lastMaxOffsetY = 0.0f;
