@@ -51,6 +51,7 @@ float bellyBulgeReturnTime = 1.5f;
 std::vector<std::string> bellybulgenodesList;
 
 float vaginaOpeningLimit = 5.0f;
+float AnusOpeningLimit = 5.0f;
 float vaginaOpeningMultiplier = 4.0f;
 
 int logging = 0;
@@ -356,6 +357,10 @@ void loadCollisionConfig()
 							else if (variableName == "VaginaOpeningLimit")
 							{
 								vaginaOpeningLimit = variableValue;
+							}
+							else if (variableName == "AnusOpeningLimit")
+							{
+								AnusOpeningLimit = variableValue;
 							}
 							else if (variableName == "VaginaOpeningMultiplier")
 							{

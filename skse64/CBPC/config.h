@@ -49,6 +49,7 @@ extern float cbellybulgeposlowest;
 extern std::vector<std::string> bellybulgenodesList;
 
 extern float vaginaOpeningLimit;
+extern float AnusOpeningLimit;
 extern float vaginaOpeningMultiplier;
 extern float bellyBulgeReturnTime;
 

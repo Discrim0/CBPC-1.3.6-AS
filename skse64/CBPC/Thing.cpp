@@ -330,8 +330,14 @@ void Thing::updatePelvis(Actor *actor)
 			CalculateDiffVagina(leftVector, opening, true);
 			CalculateDiffVagina(rightVector, opening, false);
 
-			NormalizeNiPoint(leftVector, vaginaOpeningLimit * -1.0f, vaginaOpeningLimit);
-			NormalizeNiPoint(rightVector, vaginaOpeningLimit * -1.0f, vaginaOpeningLimit);
+			if (AnusOpeningLimit != 5.0f) {
+				NormalizeNiPoint(leftVector, AnusOpeningLimit * -1.0f, AnusOpeningLimit);
+				NormalizeNiPoint(rightVector, AnusOpeningLimit * -1.0f, AnusOpeningLimit);
+			}
+			else {
+				NormalizeNiPoint(leftVector, vaginaOpeningLimit * -1.0f, vaginaOpeningLimit);
+				NormalizeNiPoint(rightVector, vaginaOpeningLimit * -1.0f, vaginaOpeningLimit);
+			}
 
 			//
 			NiPoint3 upperVector;
@@ -474,6 +480,13 @@ void Thing::updatePelvis(Actor *actor)
 	rightPusObj->m_localTransform.pos = rightPussyDefaultPos + rightVector;
 
 	//
+	if (AnusOpeningLimit != 5.0f) {
+		CalculateDiffVagina(leftVector, opening, true);
+		CalculateDiffVagina(rightVector, opening, false);
+		NormalizeNiPoint(leftVector, AnusOpeningLimit * -1.0f, AnusOpeningLimit);
+		NormalizeNiPoint(rightVector, AnusOpeningLimit * -1.0f, AnusOpeningLimit);
+	}
+
 	NiPoint3 upperVector;
 	upperVector.x = rightVector.y;
 	upperVector.y = leftVector.x;
