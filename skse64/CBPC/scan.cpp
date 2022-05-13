@@ -1,7 +1,9 @@
 #pragma once
 
 #include "SimObj.h"
-
+#include <iostream>
+#include <string>
+#include <fstream>
 
 #pragma warning(disable : 4996)
 
@@ -144,6 +146,8 @@ std::atomic<TESObjectCELL *> curCell = nullptr;
 
 int frameCount = 0;
 
+int cbpcenabled = 0;
+
 void updateActors() {
 	/*LARGE_INTEGER startingTime, endingTime, elapsedMicroseconds;
 	LARGE_INTEGER frequency;
@@ -155,6 +159,34 @@ void updateActors() {
 	// we retain all state by actor ID, in a map - it's cleared on cell change
 	actorEntries.clear();
 
+	frameCount++;
+	if (frameCount % (120) == 0)
+	{
+		std::string	runtimeDirectory = GetRuntimeDirectory();
+		std::string filepath = runtimeDirectory + "Data\\SKSE\\Plugins\\CBPCAnalSupport\\CBPAnalCollisionSupportEnabled.txt";
+		std::ifstream file(filepath);
+
+		int parsedmode = 0;
+
+		std::ifstream input_file(filepath);
+		if (!input_file.is_open()) {
+			//idk
+		}
+		else {
+			parsedmode = std::stoi(std::string((std::istreambuf_iterator<char>(input_file)), std::istreambuf_iterator<char>()));
+		}
+
+		if (parsedmode != cbpcenabled)
+		{
+			cbpcenabled = parsedmode;
+			loadMasterConfig();
+			loadCollisionConfig();
+			loadExtraCollisionConfig();
+			actors.clear();
+		}
+	}
+	if (frameCount >= 1000000)
+		frameCount = 0;
 
 	if (tuningModeCollision != 0)
 	{
